@@ -7,8 +7,9 @@
 - **小说管理**：创建、浏览、删除小说，自动生成标准化文件夹结构（人物设定、剧情走向、世界观设定、伏笔、章节）
 - **文件系统**：可视化文件夹树，支持新建/删除文件和文件夹，文本文件的读写
 - **章节管理**：独立的章节目录，快速定位和编辑各章节内容
-- **AI写作助手**：右侧聊天面板，可与AI对话辅助创作（待接入AI服务）
-- **持久化存储**：MySQL + MyBatis 持久化小说元数据，重启不丢失
+- **AI写作助手**：右侧聊天面板，可与AI对话辅助创作，支持多AI配置切换
+- **AI配置管理**：主界面设置入口，配置AI请求路径、名称、API KEY，支持设置默认配置
+- **持久化存储**：MySQL + MyBatis 持久化小说元数据和AI配置，重启不丢失
 
 ## 技术栈
 
@@ -73,16 +74,20 @@ AI4Novel/
 ├── src/main/java/org/example/ai4novel/
 │   ├── entity/              # 实体类
 │   │   ├── Novel.java       # 小说模型
-│   │   └── TreeNode.java    # 文件树节点
+│   │   ├── TreeNode.java    # 文件树节点
+│   │   └── AiConfig.java    # AI配置模型
 │   ├── mapper/
-│   │   └── NovelMapper.java # MyBatis映射
+│   │   ├── NovelMapper.java # MyBatis映射
+│   │   └── AiConfigMapper.java # AI配置映射
 │   ├── service/
 │   │   ├── NovelService.java # 小说业务逻辑
-│   │   └── FileService.java  # 文件系统操作
+│   │   ├── FileService.java  # 文件系统操作
+│   │   └── AiConfigService.java # AI配置业务逻辑
 │   ├── controller/
 │   │   ├── NovelController.java  # 小说API
 │   │   ├── FileController.java   # 文件API
-│   │   └── ChatController.java   # AI对话API
+│   │   ├── ChatController.java   # AI对话API
+│   │   └── AiConfigController.java # AI配置API
 │   └── config/
 │       └── CorsConfig.java  # 跨域配置
 ├── src/main/resources/
@@ -92,13 +97,15 @@ AI4Novel/
 │   └── src/
 │       ├── views/
 │       │   ├── HomePage.vue       # 首页（小说列表）
-│       │   └── WorkspacePage.vue  # 工作区（三栏布局）
+│       │   ├── WorkspacePage.vue  # 工作区（三栏布局）
+│       │   └── ConfigPage.vue     # AI配置页面
 │       ├── components/
 │       │   ├── LeftSidebar.vue    # 文件树面板
 │       │   ├── TreeNode.vue       # 递归树节点
 │       │   ├── ChapterList.vue    # 章节列表
 │       │   ├── ContentEditor.vue  # 内容编辑器
-│       │   └── RightSidebar.vue   # AI对话面板
+│       │   ├── RightSidebar.vue   # AI对话面板
+│       │   └── AiSelector.vue     # AI选择器组件
 │       └── router/index.js        # 路由配置
 └── novels/                   # 小说文件存储目录（自动生成）
 ```
@@ -116,4 +123,11 @@ AI4Novel/
 | PUT | `/api/novels/{id}/file` | 保存文件 |
 | POST | `/api/novels/{id}/resource` | 创建文件/文件夹 |
 | DELETE | `/api/novels/{id}/resource` | 删除文件/文件夹 |
-| POST | `/api/novels/{id}/chat` | AI对话（占位） |
+| POST | `/api/novels/{id}/chat` | AI对话 |
+| GET | `/api/ai-configs` | 获取所有AI配置 |
+| POST | `/api/ai-configs` | 创建AI配置 |
+| GET | `/api/ai-configs/{id}` | 获取AI配置详情 |
+| PUT | `/api/ai-configs/{id}` | 更新AI配置 |
+| DELETE | `/api/ai-configs/{id}` | 删除AI配置 |
+| PUT | `/api/ai-configs/{id}/set-default` | 设为默认AI配置 |
+| GET | `/api/ai-configs/default` | 获取默认AI配置 |

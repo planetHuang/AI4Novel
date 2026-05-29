@@ -1,6 +1,7 @@
 <template>
   <div class="sidebar-right">
     <div class="chat-title">AI 写作助手</div>
+    <AiSelector v-model="selectedAiId" @change="handleAiChange" />
     <div class="chat-messages" ref="chatContainer">
       <div v-for="(msg, i) in messages" :key="i" :class="['chat-msg', msg.role]">
         <div class="msg-role">{{ msg.role === 'user' ? '你' : 'AI' }}</div>
@@ -24,11 +25,14 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick } from 'vue'
+import AiSelector from './AiSelector.vue'
 
 const props = defineProps({
   novelId: { type: String, required: true }
 })
+
+const selectedAiId = ref('')
 
 const messages = ref([
   { role: 'assistant', content: '你好！我是AI写作助手，有什么可以帮助你的？' }
@@ -36,6 +40,11 @@ const messages = ref([
 const inputText = ref('')
 const sending = ref(false)
 const chatContainer = ref(null)
+
+function handleAiChange(config) {
+  // 可以在这里添加切换AI时的逻辑，比如清空聊天记录
+  // messages.value = [{ role: 'assistant', content: `已切换到 ${config.name}，有什么可以帮助你的？` }]
+}
 
 async function sendMessage() {
   const text = inputText.value.trim()
@@ -50,11 +59,16 @@ async function sendMessage() {
     const res = await fetch(`/api/novels/${props.novelId}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages.value })
+      body: JSON.stringify({
+        messages: messages.value,
+        aiConfigId: selectedAiId.value
+      })
     })
     const data = await res.json()
     if (data.code === 0) {
       messages.value.push({ role: 'assistant', content: data.data.reply })
+    } else {
+      messages.value.push({ role: 'assistant', content: '错误: ' + data.message })
     }
   } catch (e) {
     messages.value.push({ role: 'assistant', content: '请求失败，请检查后端服务。' })
