@@ -1,0 +1,638 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+}
+
+.home-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.header h1 {
+  font-size: 28px;
+  color: #1a1a2e;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: #1a1a2e;
+  border-left: 4px solid #409eff;
+  padding-left: 12px;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px 14px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #409eff;
+}
+
+.btn-primary {
+  align-self: flex-start;
+  padding: 10px 28px;
+  background: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #337ecc;
+}
+
+.btn-primary:disabled {
+  background: #a0cfff;
+  cursor: not-allowed;
+}
+
+.btn-delete {
+  padding: 4px 12px;
+  background: none;
+  color: #f56c6c;
+  border: 1px solid #f56c6c;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #f56c6c;
+  color: #fff;
+}
+
+.message {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.message.success {
+  background: #f0f9eb;
+  color: #67c23a;
+  border: 1px solid #e1f3d8;
+}
+
+.message.error {
+  background: #fef0f0;
+  color: #f56c6c;
+  border: 1px solid #fde2e2;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  padding: 48px 0;
+  font-size: 15px;
+}
+
+.novel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.novel-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.novel-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 6px;
+}
+
+.novel-desc {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.novel-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 12px;
+}
+
+.novel-folders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.folder-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  background: #ecf5ff;
+  color: #409eff;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.novel-card {
+  cursor: pointer;
+}
+
+/* ---- Workspace Layout ---- */
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+
+.workspace-header h2 {
+  margin: 0;
+  border: none;
+  padding: 0;
+  font-size: 18px;
+}
+
+.btn-back {
+  padding: 6px 14px;
+  background: none;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.btn-back:hover {
+  background: #f5f5f5;
+}
+
+.workspace-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.panel-left {
+  width: 250px;
+  min-width: 250px;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-center {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-right {
+  width: 350px;
+  min-width: 350px;
+  border-left: 1px solid #e4e7ed;
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+}
+
+/* ---- Left Sidebar / Tree ---- */
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 16px;
+  color: #666;
+  border-bottom: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+
+.tree-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.tree-node {
+  user-select: none;
+}
+
+.tree-node-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  padding-left: calc(8px + var(--depth) * 16px);
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 0 4px;
+}
+
+.tree-node-header:hover {
+  background: #e8e8e8;
+}
+
+.tree-node-header.active {
+  background: #ecf5ff;
+  color: #409eff;
+}
+
+.tree-toggle {
+  width: 16px;
+  font-size: 10px;
+  flex-shrink: 0;
+  color: #999;
+}
+
+.tree-icon {
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.tree-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tree-delete {
+  display: none;
+  margin-left: 4px;
+  padding: 0 4px;
+  background: none;
+  border: none;
+  color: #f56c6c;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tree-node-header:hover .tree-delete {
+  display: inline;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+
+.sidebar-actions button {
+  flex: 1;
+  padding: 6px 0;
+  background: #fff;
+  border: 1px dashed #dcdfe6;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #666;
+}
+
+.sidebar-actions button:hover {
+  border-color: #409eff;
+  color: #409eff;
+}
+
+.create-dialog {
+  padding: 12px;
+  border-top: 1px solid #e4e7ed;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.create-dialog input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+}
+
+.create-dialog select {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.create-dialog button {
+  padding: 6px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.create-dialog button:last-child {
+  background: #409eff;
+  color: #fff;
+  border-color: #409eff;
+}
+
+/* ---- Chapter List ---- */
+
+.chapter-list {
+  width: 200px;
+  min-width: 200px;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 16px;
+  color: #666;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.chapter-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 4px;
+  margin: 2px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-item:hover {
+  background: #e8e8e8;
+}
+
+.chapter-item.active {
+  background: #ecf5ff;
+  color: #409eff;
+}
+
+.empty-hint {
+  padding: 24px 16px;
+  color: #999;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ---- Content Editor ---- */
+
+.content-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e4e7ed;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.editor-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+}
+
+.dirty-indicator {
+  font-size: 12px;
+  color: #e6a23c;
+}
+
+.btn-save {
+  padding: 5px 16px;
+  background: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background: #337ecc;
+}
+
+.btn-save:disabled {
+  background: #a0cfff;
+  cursor: not-allowed;
+}
+
+.editor-textarea {
+  flex: 1;
+  resize: none;
+  border: none;
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.8;
+  font-family: inherit;
+  outline: none;
+}
+
+.editor-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 15px;
+}
+
+/* ---- Right Sidebar / Chat ---- */
+
+.sidebar-right {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-title {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 16px;
+  color: #666;
+  border-bottom: 1px solid #e4e7ed;
+  flex-shrink: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-msg {
+  max-width: 90%;
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+}
+
+.chat-msg.assistant {
+  align-self: flex-start;
+}
+
+.msg-role {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 2px;
+}
+
+.chat-msg.user .msg-role {
+  text-align: right;
+}
+
+.msg-content {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.chat-msg.user .msg-content {
+  background: #409eff;
+  color: #fff;
+}
+
+.chat-msg.assistant .msg-content {
+  background: #e8e8e8;
+  color: #333;
+}
+
+.chat-input-area {
+  padding: 12px;
+  border-top: 1px solid #e4e7ed;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.chat-input-area textarea {
+  flex: 1;
+  resize: none;
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  min-height: 60px;
+}
+
+.chat-input-area textarea:focus {
+  border-color: #409eff;
+}
+
+.chat-input-area button {
+  padding: 8px 16px;
+  background: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  align-self: flex-end;
+}
+
+.chat-input-area button:hover {
+  background: #337ecc;
+}
+
+.chat-input-area button:disabled {
+  background: #a0cfff;
+  cursor: not-allowed;
+}
