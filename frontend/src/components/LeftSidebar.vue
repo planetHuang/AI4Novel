@@ -56,7 +56,7 @@
 import { ref, computed } from 'vue'
 import TreeNode from './TreeNode.vue'
 
-defineProps({
+const props = defineProps({
   tree: { type: Object, default: null },
   currentPath: { type: String, default: '' }
 })

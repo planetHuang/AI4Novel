@@ -22,3 +22,19 @@ CREATE TABLE IF NOT EXISTS ai_config (
     create_time DATETIME NOT NULL,
     update_time DATETIME NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS chat_conversation (
+    id VARCHAR(32) PRIMARY KEY,
+    novel_id VARCHAR(32) NOT NULL,
+    title VARCHAR(200) NOT NULL DEFAULT '新对话',
+    create_time DATETIME NOT NULL,
+    update_time DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS chat_message (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id VARCHAR(32) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    create_time DATETIME NOT NULL
+);

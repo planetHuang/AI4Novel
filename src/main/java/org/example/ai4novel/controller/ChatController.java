@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.ai4novel.entity.AiConfig;
 import org.example.ai4novel.entity.TreeNode;
+import org.example.ai4novel.entity.ChatConversation;
+import org.example.ai4novel.entity.ChatMessage;
 import org.example.ai4novel.service.AiConfigService;
+import org.example.ai4novel.service.ChatService;
 import org.example.ai4novel.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,20 +29,117 @@ public class ChatController {
 
     private final AiConfigService aiConfigService;
     private final FileService fileService;
+    private final ChatService chatService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public ChatController(AiConfigService aiConfigService, FileService fileService) {
+    public ChatController(AiConfigService aiConfigService, FileService fileService, ChatService chatService) {
         this.aiConfigService = aiConfigService;
         this.fileService = fileService;
+        this.chatService = chatService;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
+
+    // ========== 对话管理 ==========
+
+    @GetMapping("/api/novels/{novelId}/conversations")
+    public Map<String, Object> listConversations(@PathVariable String novelId) {
+        List<ChatConversation> list = chatService.getConversations(novelId);
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("data", list);
+        return result;
+    }
+
+    @PostMapping("/api/novels/{novelId}/conversations")
+    public Map<String, Object> createConversation(@PathVariable String novelId, @RequestBody Map<String, String> body) {
+        String title = body.getOrDefault("title", "新对话");
+        ChatConversation conv = chatService.createConversation(novelId, title);
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("data", conv);
+        return result;
+    }
+
+    @DeleteMapping("/api/novels/{novelId}/conversations/{convId}")
+    public Map<String, Object> deleteConversation(@PathVariable String novelId, @PathVariable String convId) {
+        chatService.deleteConversation(convId);
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("message", "删除成功");
+        return result;
+    }
+
+    @PutMapping("/api/novels/{novelId}/conversations/{convId}")
+    public Map<String, Object> renameConversation(@PathVariable String novelId, @PathVariable String convId,
+                                                   @RequestBody Map<String, String> body) {
+        String title = body.get("title");
+        if (title == null || title.trim().isEmpty()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("code", -1);
+            result.put("message", "标题不能为空");
+            return result;
+        }
+        chatService.updateConversationTitle(convId, title.trim());
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 0);
+        result.put("message", "重命名成功");
+        return result;
+    }
+
+    @GetMapping("/api/novels/{novelId}/conversations/{convId}")
+    public Map<String, Object> getConversation(@PathVariable String novelId, @PathVariable String convId) {
+        Map<String, Object> data = chatService.getConversationWithMessages(convId);
+        Map<String, Object> result = new HashMap<>();
+        if (data == null) {
+            result.put("code", -1);
+            result.put("message", "对话不存在");
+        } else {
+            result.put("code", 0);
+            result.put("data", data);
+        }
+        return result;
+    }
+
+    // ========== 聊天 ==========
 
     @PostMapping("/api/novels/{id}/chat")
     public Map<String, Object> chat(@PathVariable String id, @RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> messages = (List<Map<String, String>>) body.get("messages");
+
+        // 获取或创建对话
+        String conversationId = (String) body.get("conversationId");
+        if (conversationId == null || conversationId.isEmpty()) {
+            // 自动创建新对话，标题用第一条用户消息截取
+            String title = "新对话";
+            if (messages != null) {
+                for (Map<String, String> msg : messages) {
+                    if ("user".equals(msg.get("role"))) {
+                        String content = msg.get("content");
+                        if (content != null && !content.isEmpty()) {
+                            title = content.length() > 30 ? content.substring(0, 30) + "..." : content;
+                        }
+                        break;
+                    }
+                }
+            }
+            ChatConversation conv = chatService.createConversation(id, title);
+            conversationId = conv.getId();
+        }
+
+        // 保存新产生的用户消息（最后一条user消息）
+        if (messages != null) {
+            for (int i = messages.size() - 1; i >= 0; i--) {
+                Map<String, String> msg = messages.get(i);
+                if ("user".equals(msg.get("role"))) {
+                    chatService.saveMessage(conversationId, "user", msg.get("content"));
+                    chatService.touchConversation(conversationId);
+                    break;
+                }
+            }
+        }
 
         // 获取AI配置：优先使用前端指定的配置，否则使用默认配置
         String aiConfigId = (String) body.get("aiConfigId");
@@ -119,8 +219,13 @@ public class ChatController {
                 String reply = messageNode.path("content").asText();
                 String reasoning = messageNode.path("reasoning_content").asText(null);
 
+                // 保存AI回复
+                chatService.saveMessage(conversationId, "assistant", reply);
+                chatService.touchConversation(conversationId);
+
                 Map<String, Object> data = new HashMap<>();
                 data.put("reply", reply);
+                data.put("conversationId", conversationId);
                 if (reasoning != null && !reasoning.isEmpty()) {
                     data.put("reasoning", reasoning);
                 }

@@ -27,6 +27,7 @@
           :dirty="isDirty"
           @update:content="onContentChange"
           @save="saveFile"
+          @cursor-position="onCursorPosition"
         />
       </div>
       <RightSidebar
@@ -43,6 +44,11 @@
       @confirm="confirmSaveAs"
       @cancel="showSaveAsDialog = false"
     />
+    <SendToEditorDialog
+      :show="showSendToEditor"
+      @confirm="handleSendToEditorConfirm"
+      @cancel="showSendToEditor = false"
+    />
   </div>
 </template>
 
@@ -54,6 +60,7 @@ import ChapterList from '../components/ChapterList.vue'
 import ContentEditor from '../components/ContentEditor.vue'
 import RightSidebar from '../components/RightSidebar.vue'
 import SaveAsDialog from '../components/SaveAsDialog.vue'
+import SendToEditorDialog from '../components/SendToEditorDialog.vue'
 
 const props = defineProps({
   id: String
@@ -69,6 +76,9 @@ const currentFileName = ref('')
 const isDirty = ref(false)
 const savedContent = ref('')
 const showSaveAsDialog = ref(false)
+const showSendToEditor = ref(false)
+const pendingAiContent = ref('')
+const cursorPosition = ref(0)
 
 function goBack() {
   router.push({ name: 'Home' })
@@ -185,15 +195,48 @@ async function deleteResource(path) {
   }
 }
 
+function onCursorPosition(pos) {
+  cursorPosition.value = pos
+}
+
 function onSendToEditor(content) {
-  if (isDirty.value && currentContent.value) {
-    if (!confirm('当前有未保存的修改，是否替换？')) return
+  pendingAiContent.value = content
+  if (currentFilePath.value) {
+    showSendToEditor.value = true
+  } else {
+    if (isDirty.value && currentContent.value) {
+      if (!confirm('当前有未保存的修改，是否替换？')) return
+    }
+    currentFilePath.value = ''
+    currentFileName.value = ''
+    currentContent.value = content
+    savedContent.value = ''
+    isDirty.value = true
   }
-  currentFilePath.value = ''
-  currentFileName.value = ''
-  currentContent.value = content
-  savedContent.value = ''
-  isDirty.value = true
+}
+
+async function handleSendToEditorConfirm(mode) {
+  showSendToEditor.value = false
+  const aiContent = pendingAiContent.value
+
+  if (mode === 'cursor') {
+    const pos = cursorPosition.value
+    const old = currentContent.value
+    currentContent.value = old.slice(0, pos) + aiContent + old.slice(pos)
+    isDirty.value = true
+  } else if (mode === 'append') {
+    currentContent.value = currentContent.value + aiContent
+    isDirty.value = true
+  } else if (mode === 'new') {
+    if (isDirty.value && currentFilePath.value) {
+      await saveFile()
+    }
+    currentFilePath.value = ''
+    currentFileName.value = ''
+    currentContent.value = aiContent
+    savedContent.value = ''
+    isDirty.value = true
+  }
 }
 
 async function confirmSaveAs({ parentPath, fileName }) {

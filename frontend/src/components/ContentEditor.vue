@@ -7,9 +7,12 @@
     </div>
     <textarea
       v-if="filePath || content"
+      ref="textareaRef"
       class="editor-textarea"
       :value="content"
       @input="$emit('update:content', $event.target.value)"
+      @mouseup="emitCursor"
+      @keyup="emitCursor"
       placeholder="开始写作..."
     ></textarea>
     <div v-else class="editor-empty">
@@ -19,6 +22,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 defineProps({
   filePath: { type: String, default: '' },
   content: { type: String, default: '' },
@@ -26,5 +31,13 @@ defineProps({
   dirty: { type: Boolean, default: false }
 })
 
-defineEmits(['update:content', 'save'])
+const emit = defineEmits(['update:content', 'save', 'cursor-position'])
+
+const textareaRef = ref(null)
+
+function emitCursor() {
+  if (textareaRef.value) {
+    emit('cursor-position', textareaRef.value.selectionStart)
+  }
+}
 </script>
