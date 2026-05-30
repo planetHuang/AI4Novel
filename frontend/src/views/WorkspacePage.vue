@@ -32,6 +32,7 @@
       <RightSidebar
         class="panel-right"
         :novelId="id"
+        :tree="tree"
         @send-to-editor="onSendToEditor"
       />
     </div>

@@ -597,6 +597,7 @@ h2 {
   padding: 12px;
   border-top: 1px solid #e4e7ed;
   display: flex;
+  flex-direction: column;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -611,13 +612,52 @@ h2 {
   outline: none;
   font-family: inherit;
   min-height: 60px;
+  width: 100%;
+}
+
+/* ---- File Tags ---- */
+.file-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #ecf5ff;
+  color: #409eff;
+  border: 1px solid #d9ecff;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.file-tag-remove {
+  background: none;
+  border: none;
+  color: #409eff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  margin-left: 2px;
+}
+.file-tag-remove:hover {
+  color: #f56c6c;
 }
 
 .chat-input-area textarea:focus {
   border-color: #409eff;
 }
 
-.chat-input-area button {
+.chat-input-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.chat-input-actions button:not(.btn-pick-file) {
   padding: 8px 16px;
   background: #409eff;
   color: #fff;
@@ -625,7 +665,29 @@ h2 {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  align-self: flex-end;
+}
+
+.chat-input-actions button:not(.btn-pick-file):hover {
+  background: #337ecc;
+}
+
+.chat-input-actions button:not(.btn-pick-file):disabled {
+  background: #a0cfff;
+  cursor: not-allowed;
+}
+
+.btn-pick-file {
+  padding: 8px 12px;
+  background: #f0f0f0;
+  color: #555;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.btn-pick-file:hover {
+  background: #e0e0e0;
 }
 
 .chat-input-area button:hover {
@@ -839,4 +901,104 @@ h2 {
 }
 .saveas-actions button:last-child:hover {
   background: #337ecc;
+}
+
+/* ---- File Picker Dialog ---- */
+.picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.picker-panel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  width: 420px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+.picker-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+.picker-tree {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  padding: 4px 0;
+}
+.picker-empty {
+  text-align: center;
+  color: #999;
+  padding: 2rem;
+  font-size: 14px;
+}
+.picker-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin: 1px 4px;
+  font-size: 13px;
+  color: #555;
+}
+.picker-item:hover {
+  background: #f5f5f5;
+}
+.picker-item.selected {
+  background: #ecf5ff;
+  color: #409eff;
+}
+.picker-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #409eff;
+}
+.picker-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.picker-btn-cancel {
+  padding: 8px 20px;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #fff;
+  color: #333;
+}
+.picker-btn-confirm {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #409eff;
+  color: #fff;
+}
+.picker-btn-confirm:hover {
+  background: #337ecc;
+}
+.picker-btn-confirm:disabled {
+  background: #a0cfff;
+  cursor: not-allowed;
 }

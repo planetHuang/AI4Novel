@@ -18,25 +18,42 @@
       </div>
     </div>
     <div class="chat-input-area">
+      <div class="file-tags" v-if="selectedFiles.length > 0">
+        <span v-for="(f, idx) in selectedFiles" :key="f" class="file-tag">
+          {{ f }}
+          <button class="file-tag-remove" @click="removeFile(idx)" title="移除">&times;</button>
+        </span>
+      </div>
       <textarea
         v-model="inputText"
         @keyup.enter.exact="sendMessage"
-        placeholder="输入消息，按 Enter 发送，Shift+Enter 换行..."
+        placeholder="输入消息，Enter 发送 | 支持 '阅读 章节/xxx.txt' 引用项目文件"
         rows="3"
       ></textarea>
-      <button @click="sendMessage" :disabled="!inputText.trim() || sending">发送</button>
+      <div class="chat-input-actions">
+        <button @click="showFilePicker = true" title="选择项目文件" class="btn-pick-file">选择文件</button>
+        <button @click="sendMessage" :disabled="(!inputText.trim() && selectedFiles.length === 0) || sending">发送</button>
+      </div>
     </div>
+    <FilePickerDialog
+      :show="showFilePicker"
+      :tree="tree"
+      @confirm="onFilesPicked"
+      @cancel="showFilePicker = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, nextTick } from 'vue'
 import AiSelector from './AiSelector.vue'
+import FilePickerDialog from './FilePickerDialog.vue'
 
 const emit = defineEmits(['send-to-editor'])
 
 const props = defineProps({
-  novelId: { type: String, required: true }
+  novelId: { type: String, required: true },
+  tree: { type: Object, default: null }
 })
 
 const selectedAiId = ref('')
@@ -47,6 +64,21 @@ const messages = ref([
 const inputText = ref('')
 const sending = ref(false)
 const chatContainer = ref(null)
+const showFilePicker = ref(false)
+const selectedFiles = ref([])
+
+function onFilesPicked(paths) {
+  showFilePicker.value = false
+  for (const p of paths) {
+    if (!selectedFiles.value.includes(p)) {
+      selectedFiles.value.push(p)
+    }
+  }
+}
+
+function removeFile(idx) {
+  selectedFiles.value.splice(idx, 1)
+}
 
 function handleAiChange(config) {
   // 可以在这里添加切换AI时的逻辑，比如清空聊天记录
@@ -55,21 +87,28 @@ function handleAiChange(config) {
 
 async function sendMessage() {
   const text = inputText.value.trim()
-  if (!text || sending.value) return
+  if ((!text && selectedFiles.value.length === 0) || sending.value) return
 
-  messages.value.push({ role: 'user', content: text })
+  const displayText = text || (selectedFiles.value.length > 0 ? '请根据引用的文件内容回答' : '')
+  messages.value.push({ role: 'user', content: displayText })
+  const filePathsToSend = [...selectedFiles.value]
   inputText.value = ''
+  selectedFiles.value = []
   sending.value = true
   await scrollToBottom()
 
   try {
+    const body = {
+      messages: messages.value,
+      aiConfigId: selectedAiId.value
+    }
+    if (filePathsToSend.length > 0) {
+      body.filePaths = filePathsToSend
+    }
     const res = await fetch(`/api/novels/${props.novelId}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: messages.value,
-        aiConfigId: selectedAiId.value
-      })
+      body: JSON.stringify(body)
     })
     const data = await res.json()
     if (data.code === 0) {

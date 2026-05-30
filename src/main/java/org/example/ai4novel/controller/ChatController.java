@@ -3,24 +3,35 @@ package org.example.ai4novel.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.ai4novel.entity.AiConfig;
+import org.example.ai4novel.entity.TreeNode;
 import org.example.ai4novel.service.AiConfigService;
+import org.example.ai4novel.service.FileService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 public class ChatController {
 
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
+    private static final Pattern READ_PATTERN = Pattern.compile(
+            "阅读\\s*[“”\"《]?([^”\"》\\s,，。.!；;]+(?:\\.[a-zA-Z]+)?)[”\"》]?"
+    );
+
     private final AiConfigService aiConfigService;
+    private final FileService fileService;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    public ChatController(AiConfigService aiConfigService) {
+    public ChatController(AiConfigService aiConfigService, FileService fileService) {
         this.aiConfigService = aiConfigService;
+        this.fileService = fileService;
         this.restTemplate = new RestTemplate();
         this.objectMapper = new ObjectMapper();
     }
@@ -62,6 +73,11 @@ public class ChatController {
                 }
             }
         }
+
+        // 前端显式选中的文件 + "阅读"指令解析的文件，合并拼入上下文
+        @SuppressWarnings("unchecked")
+        List<String> explicitPaths = (List<String>) body.get("filePaths");
+        augmentContext(id, messages, explicitPaths);
 
         try {
             // 构建请求体
@@ -130,6 +146,113 @@ public class ChatController {
             result.put("data", data);
             return result;
         }
+    }
+
+    /**
+     * 解析最后一条用户消息中的"阅读 文件路径"指令，读取对应文件内容拼入上下文
+     */
+    private void augmentContext(String novelId, List<Map<String, String>> messages, List<String> explicitPaths) {
+        if (messages == null || messages.isEmpty()) return;
+
+        // 找到最后一条 user 消息
+        int lastUserIdx = -1;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if ("user".equals(messages.get(i).get("role"))) {
+                lastUserIdx = i;
+                break;
+            }
+        }
+        if (lastUserIdx < 0) return;
+
+        String userMsg = messages.get(lastUserIdx).get("content");
+        if (userMsg == null) userMsg = "";
+
+        // 收集文件路径：前端显式选择 + "阅读"文本指令
+        List<String> filePaths = new ArrayList<>();
+        if (explicitPaths != null) {
+            filePaths.addAll(explicitPaths);
+        }
+        if (userMsg.contains("阅读")) {
+            Matcher matcher = READ_PATTERN.matcher(userMsg);
+            while (matcher.find()) {
+                filePaths.add(matcher.group(1).trim());
+            }
+        }
+        if (filePaths.isEmpty()) return;
+
+        StringBuilder context = new StringBuilder();
+        context.append("[项目文件内容]\n\n");
+
+        // 获取文件树用于模糊匹配
+        TreeNode tree = null;
+        try {
+            tree = fileService.getTree(novelId);
+        } catch (Exception e) {
+            log.warn("获取文件树失败，仅支持精确路径匹配: {}", e.getMessage());
+        }
+
+        for (String path : filePaths) {
+            String resolved = resolvePath(tree, path);
+            if (resolved == null) {
+                context.append("【文件未找到：").append(path).append("】\n\n");
+                continue;
+            }
+            try {
+                Map<String, String> fileData = fileService.readFile(novelId, resolved);
+                context.append("【文件：").append(resolved).append("】\n");
+                context.append(fileData.get("content")).append("\n\n");
+            } catch (Exception e) {
+                context.append("【读取失败：").append(resolved).append(" — ").append(e.getMessage()).append("】\n\n");
+            }
+        }
+
+        // 去掉原消息中的"阅读 xxx"片段，保留剩余提示词
+        String remaining = READ_PATTERN.matcher(userMsg).replaceAll("").trim();
+        // 去掉开头的标点/连词
+        remaining = remaining.replaceFirst("^[，,。.、\\s]+", "");
+
+        context.append("---\n用户提示：");
+        if (!remaining.isEmpty()) {
+            context.append(remaining);
+        }
+
+        messages.get(lastUserIdx).put("content", context.toString());
+    }
+
+    private String resolvePath(TreeNode tree, String path) {
+        if (tree == null) return path;
+
+        // 按完整路径精确查找
+        if (findByPath(tree, path)) return path;
+
+        // 按文件名模糊查找
+        String fileName = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+        return findByFileName(tree, fileName);
+    }
+
+    private boolean findByPath(TreeNode node, String path) {
+        if (node == null) return false;
+        if (path.equals(node.getPath())) return true;
+        if (node.getChildren() != null) {
+            for (TreeNode child : node.getChildren()) {
+                if (findByPath(child, path)) return true;
+            }
+        }
+        return false;
+    }
+
+    private String findByFileName(TreeNode node, String fileName) {
+        if (node == null) return null;
+        if (fileName.equals(node.getName()) && "file".equals(node.getType())) {
+            return node.getPath();
+        }
+        if (node.getChildren() != null) {
+            for (TreeNode child : node.getChildren()) {
+                String found = findByFileName(child, fileName);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     @ExceptionHandler(RuntimeException.class)
