@@ -1,12 +1,12 @@
 <template>
   <div class="content-editor">
     <div class="editor-header">
-      <span class="editor-title">{{ fileName || '未打开文件' }}</span>
+      <span class="editor-title">{{ filePath ? fileName : (content ? '新文件' : '未打开文件') }}</span>
       <span v-if="dirty" class="dirty-indicator">● 未保存</span>
-      <button :disabled="!dirty" @click="$emit('save')" class="btn-save">保存</button>
+      <button :disabled="!dirty" @click="$emit('save')" class="btn-save">{{ filePath ? '保存' : '另存为...' }}</button>
     </div>
     <textarea
-      v-if="filePath"
+      v-if="filePath || content"
       class="editor-textarea"
       :value="content"
       @input="$emit('update:content', $event.target.value)"

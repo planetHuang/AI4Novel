@@ -32,8 +32,16 @@
       <RightSidebar
         class="panel-right"
         :novelId="id"
+        @send-to-editor="onSendToEditor"
       />
     </div>
+    <SaveAsDialog
+      :show="showSaveAsDialog"
+      :tree="tree"
+      :defaultName="currentFileName"
+      @confirm="confirmSaveAs"
+      @cancel="showSaveAsDialog = false"
+    />
   </div>
 </template>
 
@@ -44,6 +52,7 @@ import LeftSidebar from '../components/LeftSidebar.vue'
 import ChapterList from '../components/ChapterList.vue'
 import ContentEditor from '../components/ContentEditor.vue'
 import RightSidebar from '../components/RightSidebar.vue'
+import SaveAsDialog from '../components/SaveAsDialog.vue'
 
 const props = defineProps({
   id: String
@@ -58,6 +67,7 @@ const currentContent = ref('')
 const currentFileName = ref('')
 const isDirty = ref(false)
 const savedContent = ref('')
+const showSaveAsDialog = ref(false)
 
 function goBack() {
   router.push({ name: 'Home' })
@@ -109,7 +119,11 @@ function onContentChange(content) {
 }
 
 async function saveFile() {
-  if (!currentFilePath.value || !isDirty.value) return
+  if (!isDirty.value) return
+  if (!currentFilePath.value) {
+    showSaveAsDialog.value = true
+    return
+  }
   try {
     const res = await fetch(`/api/novels/${props.id}/file`, {
       method: 'PUT',
@@ -167,6 +181,41 @@ async function deleteResource(path) {
     }
   } catch (e) {
     console.error('删除失败', e)
+  }
+}
+
+function onSendToEditor(content) {
+  if (isDirty.value && currentContent.value) {
+    if (!confirm('当前有未保存的修改，是否替换？')) return
+  }
+  currentFilePath.value = ''
+  currentFileName.value = ''
+  currentContent.value = content
+  savedContent.value = ''
+  isDirty.value = true
+}
+
+async function confirmSaveAs({ parentPath, fileName }) {
+  const filePath = parentPath ? parentPath + '/' + fileName : fileName
+  try {
+    const res = await fetch(`/api/novels/${props.id}/file`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: filePath, content: currentContent.value })
+    })
+    const data = await res.json()
+    if (data.code === 0) {
+      currentFilePath.value = filePath
+      currentFileName.value = fileName
+      savedContent.value = currentContent.value
+      isDirty.value = false
+      showSaveAsDialog.value = false
+      await loadTree()
+    } else {
+      alert(data.message)
+    }
+  } catch (e) {
+    console.error('保存失败', e)
   }
 }
 

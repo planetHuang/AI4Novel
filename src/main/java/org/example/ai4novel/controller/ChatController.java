@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/novels/{id}")
 public class ChatController {
 
     private final AiConfigService aiConfigService;
@@ -26,7 +25,7 @@ public class ChatController {
         this.objectMapper = new ObjectMapper();
     }
 
-    @PostMapping("/chat")
+    @PostMapping("/api/novels/{id}/chat")
     public Map<String, Object> chat(@PathVariable String id, @RequestBody Map<String, Object> body) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> messages = (List<Map<String, String>>) body.get("messages");

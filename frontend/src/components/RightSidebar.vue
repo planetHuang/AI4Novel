@@ -6,6 +6,11 @@
       <div v-for="(msg, i) in messages" :key="i" :class="['chat-msg', msg.role]">
         <div class="msg-role">{{ msg.role === 'user' ? '你' : 'AI' }}</div>
         <div class="msg-content">{{ msg.content }}</div>
+        <button
+          v-if="msg.role === 'assistant' && !sending"
+          class="btn-send-to-editor"
+          @click="emit('send-to-editor', msg.content)"
+        >发送到编辑器</button>
       </div>
       <div v-if="sending" class="chat-msg assistant">
         <div class="msg-role">AI</div>
@@ -27,6 +32,8 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import AiSelector from './AiSelector.vue'
+
+const emit = defineEmits(['send-to-editor'])
 
 const props = defineProps({
   novelId: { type: String, required: true }

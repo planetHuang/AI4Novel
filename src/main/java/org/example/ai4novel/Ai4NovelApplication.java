@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @MapperScan("org.example.ai4novel.mapper")
-public class Ai4NovelApplication {
+public class  Ai4NovelApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(Ai4NovelApplication.class, args);
